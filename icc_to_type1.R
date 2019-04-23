@@ -1,68 +1,110 @@
 # load required packages
 library(arm)
 
-# set value
-lvl2units <- 31
-lvl1unitsperlvl2unit <- 40
-targetICC <- .1 
-sigma.a <- 1.7 ## use 2.5 for ICC 0.2; use 1.7 for 10
-totalnumberoflines <- lvl2units * lvl1unitsperlvl2unit
-subjectspercondition <- totalnumberoflines / 2 
-ICCinfbound <- targetICC - 0.001
-ICCsupbound <- targetICC + 0.001
-j <- 0
+# set number of units
+lvl_2_units          <- 30 # number of level 2 units
+lvl_1_units          <- 40 # number of level 1 units per level 2 unit
+total_units          <- lvl_2_units * lvl_1_units # total number of units accross all levels
+subjects_cond        <- total_units / 2 # the number of subjects per condition; subjects arbitrarly separated into a treatment and a control condition
+
+# set target icc
+target_icc    <- .1 # target icc
+icc_inf_bound <- target_icc - 0.001 # set the lowest acceptable simulated ICC level
+icc_sup_bound <- target_icc + 0.001 # set the highest acceptable simulated ICC level
+
+# set up model values
+mu_a          <- 0 # mean for intercept
+mu_b          <- 3 # mean for the slope
+sigma_a       <- 1.7 # get sd for intercept: .5 for ICC .01; 1.7 for ICC .10; 2.5 for ICC 0.2; 3.3 for ICC 0.3
+sigma_b       <- 4 # get sd for slope
+sigma_y       <- 1 # get sd for outcome variable
+rho           <- 0.56 # between group correlation parameter
+
+# set number of replications
+replications <- 50
+
+# set counter values
 counter <- 0
-zr <- c(0, 0, 0, 0, 0, 0, 0)
-rho <- 0.56
-mu.a <- 0
-mu.b <- 3
-sigma.b <- 4
-sigma.y <- 1
-replications <- 100
-group <- rep(1:lvl2units, rep(lvl1unitsperlvl2unit,lvl2units))
-cond <- gl(2,subjectspercondition) 
-lvl2groups <- gl(lvl2units,lvl1unitsperlvl2unit) 
-Sigma.ab <- array(c(sigma.a^2, rho * sigma.a * sigma.b, rho * sigma.a * sigma.b, sigma.b^2), c(2, 2))
-temp <- NULL
-l <- 1
-repeat { 
-  ab <- mvrnorm(lvl1unitsperlvl2unit, c(mu.a, mu.b), Sigma.ab)
-  a <- ab[,1]
-  b <- ab[,2] 
-  x <- rnorm(lvl2units*lvl1unitsperlvl2unit) 
-  data <- rnorm(lvl2units*lvl1unitsperlvl2unit, a[group] + b*x,sigma.y)
-  lm.fit <- lm(data~cond)
-  sumary <- summary(lm.fit)
-  cond.estimate <- sumary$coefficients[2] 
-  cond.se <- sumary$coefficients[4]
-  t.value <- cond.estimate / cond.se
-  p.value <- sumary$coefficients[8] 
-  lm.lvl2groups.fit <- lm(data~lvl2groups) 
-  MSEwithin <- anova(lm.lvl2groups.fit)[2,2] / anova(lm.lvl2groups.fit)[2,1] 
-  MSEgroups <- anova(lm.lvl2groups.fit)[1,2] / anova(lm.lvl2groups.fit)[1,1] 
-  MSEbetween <- ((MSEgroups-MSEwithin) / lvl1unitsperlvl2unit) 
-  ICC <- MSEbetween / (MSEwithin + MSEbetween)
-  temp[l] <- ICC
-  l <- l + 1
-  t.Kish.correctn <- sqrt((1 + (lvl1unitsperlvl2unit-1) * ICC)) 
-  Kishcorrctd.t.value <- t.value / t.Kish.correctn 
-  Kishcorrectd.p.value <- 2 * pt(-abs(Kishcorrctd.t.value), anova(lm.fit)[2,1])
-  if(ICC > ICCinfbound){ 
-    if(ICC < ICCsupbound){ 
-      counter <- counter + 1 
-      zr <- c(zr, counter, t.value, p.value, ICC, t.Kish.correctn, Kishcorrctd.t.value, Kishcorrectd.p.value)}}
-  j <- counter
-  if (j > (replications - 1)) break } 
 
-endofzr <- 7 * (replications + 1)
-zrOK <- zr[8:endofzr]
-tmp <- array(zrOK, c(7, counter))
-t(tmp)
+# preallocate memory for output
+zr <- data.frame(count           = rep(NA, replications),
+                 t_val           = rep(NA, replications),
+                 p_val           = rep(NA, replications),
+                 icc             = rep(NA, replications),
+                 kish_correction = rep(NA, replications),
+                 kish_t_val      = rep(NA, replications),
+                 kish_p_val      = rep(NA, replications))
 
-test <- t(tmp)
+# set group information 
+group        <- rep(1:lvl_2_units, each = lvl_1_units) # create a group variable with each level level 2 variable repeated the number of level 1 units 
+cond         <- gl(n = 2,           k = subjects_cond) # create a condition faactor with two levels, each repeated the number of subjects per condition 
+lvl_2_groups <- gl(n = lvl_2_units, k = lvl_1_units) # create a factor with levels equal to the number of level 2 units and with each level repeated equal to the number of level 1 units
 
-sum(test[, 3] < .05) / length(test[, 3]) * 100
+# get variance and covariances
+sigma_ab <- array(c(sigma_a^2, # variance for the intercept
+                    rho * sigma_a * sigma_b, # covariance between the intercept and the slope
+                    rho * sigma_a * sigma_b, # covariance between the intercept and the slope
+                    sigma_b^2), # variance for the slope
+                  dim = c(2, 2)) # number of dimensions for the matrixmv
 
-mean(test[, 4])
+while (counter != replications) { 
+  
+  # simulate from a multivariate normal distribution
+  ab <- mvrnorm(n     = lvl_1_units,   # draw the number of samples equivalent to level 1 units
+                mu    = c(mu_a, mu_b), # set means for the variables
+                Sigma = sigma_ab)      # set the covariance matrix
+  a <- ab[,1] # simulation of intercept
+  b <- ab[,2] # simulation of slope
+  x <- rnorm(n = total_units) # sample the number of total units from a normal distribution
+  
+  # sample from a random normal distribution
+  data <- rnorm(n    = total_units, # sample the total number of units
+                mean = a[group] + b * x, # set the mean to expected group mean 
+                sd   = sigma_y) # set the standard deviation to the standard deviation of the outcome variable
+  
+  # predict simulated data from condition
+  lm_fit        <- lm(data ~ cond) # predict simulated data from condition
+  mod_sum       <- summary(lm_fit) # summarize model
+  cond_estimate <- mod_sum$coefficients[2] # extract condition slope
+  cond_se       <- mod_sum$coefficients[4] # extract condition SE
+  t_val         <- mod_sum$coefficients[6] # extract condition t
+  p_val         <- mod_sum$coefficients[8] # extract condition p
+  
+  # predict simulated data from groups
+  lm_lvl_2_groups_fit <- anova(lm(data ~ lvl_2_groups))
+  
+  # calculate icc
+  mse_within  <- lm_lvl_2_groups_fit[2,2] / lm_lvl_2_groups_fit[2,1] # calculate residual mean squares error
+  mse_groups  <- lm_lvl_2_groups_fit[1,2] / lm_lvl_2_groups_fit[1,1] # calculate group mean squares error
+  mse_between <- ((mse_groups - mse_within) / lvl_1_units) # calculate between mean squares error
+  icc         <- mse_between / (mse_within + mse_between) # calcualte icc
+  
+  # calculate t-test using kish's correction
+  kish_correction <- sqrt((1 + (lvl_1_units - 1) * icc)) # calculate correction value for the given ICC
+  kish_t_val      <- t_val / kish_correction # reduce t_val by correction value
+  kish_p_val      <- 2 * pt(-abs(kish_t_val), anova(lm_fit)[2,1]) # calculate p-val for kish corrected degrees of freedom
+  
+  if (icc > icc_inf_bound & icc < icc_sup_bound) { 
+    # increment counter by 1
+    counter <- counter + 1 
+    
+    # assign calculated values to 
+    zr[counter,           "count"] <- counter
+    zr[counter,           "t_val"] <- t_val
+    zr[counter,           "p_val"] <- p_val
+    zr[counter,             "icc"] <- icc
+    zr[counter, "kish_correction"] <- kish_correction
+    zr[counter,      "kish_t_val"] <- kish_t_val
+    zr[counter,      "kish_p_val"] <- kish_p_val
+  }
+} 
+
+zr
+
+# calculated type i error
+sum(zr$p_val < .05) / length(zr$p_val) * 100
+
+# look at icc
+mean(zr$icc)
 
     
