@@ -2,26 +2,26 @@
 library(arm)
 
 # set number of units
-lvl_2_units          <- 30 # number of level 2 units
-lvl_1_units          <- 40 # number of level 1 units per level 2 unit
+lvl_2_units          <- 6 # number of level 2 units
+lvl_1_units          <- 20 # number of level 1 units per level 2 unit
 total_units          <- lvl_2_units * lvl_1_units # total number of units accross all levels
 subjects_cond        <- total_units / 2 # the number of subjects per condition; subjects arbitrarly separated into a treatment and a control condition
 
 # set target icc
-target_icc    <- .1 # target icc
+target_icc    <- .2 # target icc
 icc_inf_bound <- target_icc - 0.001 # set the lowest acceptable simulated ICC level
 icc_sup_bound <- target_icc + 0.001 # set the highest acceptable simulated ICC level
 
 # set up model values
 mu_a          <- 0 # mean for intercept
 mu_b          <- 3 # mean for the slope
-sigma_a       <- 1.7 # get sd for intercept: .5 for ICC .01; 1.7 for ICC .10; 2.5 for ICC 0.2; 3.3 for ICC 0.3
+sigma_a       <- 2.5 # get sd for intercept: .5 for ICC .01; 1.7 for ICC .10; 2.5 for ICC 0.2; 3.3 for ICC 0.3
 sigma_b       <- 4 # get sd for slope
 sigma_y       <- 1 # get sd for outcome variable
 rho           <- 0.56 # between group correlation parameter
 
 # set number of replications
-replications <- 50
+replications <- 5000
 
 # set counter values
 counter <- 0
@@ -76,27 +76,30 @@ while (counter != replications) {
   # calculate icc
   mse_within  <- lm_lvl_2_groups_fit[2,2] / lm_lvl_2_groups_fit[2,1] # calculate residual mean squares error
   mse_groups  <- lm_lvl_2_groups_fit[1,2] / lm_lvl_2_groups_fit[1,1] # calculate group mean squares error
-  mse_between <- ((mse_groups - mse_within) / lvl_1_units) # calculate between mean squares error
+  mse_between <- (mse_groups - mse_within) / lvl_1_units # calculate between mean squares error
   icc         <- mse_between / (mse_within + mse_between) # calcualte icc
   
+  # skip loop if icc isn't between the values of interest
+  if (icc < icc_inf_bound | icc > icc_sup_bound) { 
+    next
+  }
+  
   # calculate t-test using kish's correction
-  kish_correction <- sqrt((1 + (lvl_1_units - 1) * icc)) # calculate correction value for the given ICC
+  kish_correction <- sqrt(1 + (lvl_1_units - 1) * icc) # calculate correction value for the given ICC
   kish_t_val      <- t_val / kish_correction # reduce t_val by correction value
   kish_p_val      <- 2 * pt(-abs(kish_t_val), anova(lm_fit)[2,1]) # calculate p-val for kish corrected degrees of freedom
   
-  if (icc > icc_inf_bound & icc < icc_sup_bound) { 
-    # increment counter by 1
-    counter <- counter + 1 
-    
-    # assign calculated values to 
-    zr[counter,           "count"] <- counter
-    zr[counter,           "t_val"] <- t_val
-    zr[counter,           "p_val"] <- p_val
-    zr[counter,             "icc"] <- icc
-    zr[counter, "kish_correction"] <- kish_correction
-    zr[counter,      "kish_t_val"] <- kish_t_val
-    zr[counter,      "kish_p_val"] <- kish_p_val
-  }
+  # increment counter by 1
+  counter <- counter + 1 
+  
+  # assign calculated values to zr
+  zr[counter,           "count"] <- counter
+  zr[counter,           "t_val"] <- t_val
+  zr[counter,           "p_val"] <- p_val
+  zr[counter,             "icc"] <- icc
+  zr[counter, "kish_correction"] <- kish_correction
+  zr[counter,      "kish_t_val"] <- kish_t_val
+  zr[counter,      "kish_p_val"] <- kish_p_val
 } 
 
 zr
