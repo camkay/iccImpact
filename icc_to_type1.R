@@ -1,9 +1,11 @@
 # load required packages
-library(arm)
+library(MASS)
+
+# create function
 
 # set number of units
-lvl_2_units          <- 6 # number of level 2 units
-lvl_1_units          <- 20 # number of level 1 units per level 2 unit
+lvl_2_units          <- 30 # number of level 2 units
+lvl_1_units          <- 50 # number of level 1 units per level 2 unit
 total_units          <- lvl_2_units * lvl_1_units # total number of units accross all levels
 subjects_cond        <- total_units / 2 # the number of subjects per condition; subjects arbitrarly separated into a treatment and a control condition
 
@@ -53,8 +55,8 @@ while (counter != replications) {
   ab <- mvrnorm(n     = lvl_1_units,   # draw the number of samples equivalent to level 1 units
                 mu    = c(mu_a, mu_b), # set means for the variables
                 Sigma = sigma_ab)      # set the covariance matrix
-  a <- ab[,1] # simulation of intercept
-  b <- ab[,2] # simulation of slope
+  a <- ab[ , 1] # simulation of intercept
+  b <- ab[ , 2] # simulation of slope
   x <- rnorm(n = total_units) # sample the number of total units from a normal distribution
   
   # sample from a random normal distribution
@@ -100,9 +102,17 @@ while (counter != replications) {
   zr[counter, "kish_correction"] <- kish_correction
   zr[counter,      "kish_t_val"] <- kish_t_val
   zr[counter,      "kish_p_val"] <- kish_p_val
+  
+  # notify of ICC saved
+  if (counter %% (replications / 100) == 0) {
+    message(paste0("Replication ", 
+                   counter, 
+                   " saved."))
+  }
 } 
 
-zr
+# look at results
+head(zr)
 
 # calculated type i error
 sum(zr$p_val < .05) / length(zr$p_val) * 100
