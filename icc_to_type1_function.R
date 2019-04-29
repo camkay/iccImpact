@@ -116,10 +116,10 @@ example <- icc_type_i()
 # look at results
 head(example)
 
-# calculated type i error
+# calculate type i error
 sum(example$p_val < .05) / length(example$p_val) * 100
 
-# look at icc
+# look at average icc (for sanity)
 mean(example$icc)
 
     
