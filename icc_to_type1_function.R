@@ -2,17 +2,28 @@
 library(MASS)
 
 # create function
-icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, sigma_a = 2.5, replications = 1000) {
+icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, replications = 1000, icc_acc = .01) {
   
   # calculate total number of units and number of units per condition
   total_units          <- lvl_2_units * lvl_1_units # total number of units accross all levels
   subjects_cond        <- total_units / 2 # the number of subjects per condition; subjects arbitrarly separated into a treatment and a control condition
   
   # set target icc
-  icc_inf_bound <- target_icc - 0.001 # set the lowest acceptable simulated ICC level
-  icc_sup_bound <- target_icc + 0.001 # set the highest acceptable simulated ICC level
+  icc_inf_bound <- target_icc - icc_acc # set the lowest acceptable simulated ICC level
+  icc_sup_bound <- target_icc + icc_acc # set the highest acceptable simulated ICC level
   
   # set up model values
+  sigma_a       <- (-66579.2859 * target_icc^10) + 
+                   (278665.7676 * target_icc^9)  - 
+                   (501224.1950 * target_icc^8)  + 
+                   (506823.0658 * target_icc^7)  - 
+                   (316468.9923 * target_icc^6)  + 
+                   (126275.3718 * target_icc^5)  - 
+                   (32250.17988 * target_icc^4)  + 
+                   (5162.324206 * target_icc^3)  - 
+                   (498.8644784 * target_icc^2)  + 
+                   (35.70130764 * target_icc)    + 
+                   (.1601755428) # sigma_a for a given icc
   mu_a          <- 0 # mean for intercept
   mu_b          <- 3 # mean for the slope
   sigma_b       <- 4 # get sd for slope
@@ -47,7 +58,7 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, sigm
   while (counter != replications) { 
     
     # simulate from a multivariate normal distribution
-    ab <- mvrnorm(n     = lvl_1_units,   # draw the number of samples equivalent to level 1 units
+    ab <- mvrnorm(n     = lvl_2_units,   # draw the number of samples equivalent to level 1 units
                   mu    = c(mu_a, mu_b), # set means for the variables
                   Sigma = sigma_ab)      # set the covariance matrix
     a <- ab[ , 1] # simulation of intercept
@@ -77,7 +88,7 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, sigm
     icc         <- mse_between / (mse_within + mse_between) # calcualte icc
     
     # skip loop if icc isn't between the values of interest
-    if (icc < icc_inf_bound | icc > icc_sup_bound) { 
+    if (icc < icc_inf_bound || icc > icc_sup_bound) { 
       next
     }
     
@@ -99,7 +110,7 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, sigm
     zr[counter,      "kish_p_val"] <- kish_p_val
     
     # notify of ICC saved
-    if (counter %% (replications / 100) == 0) {
+    if (counter %% (100) == 0) {
       message(paste0("Replication ", 
                      counter, 
                      " saved."))
@@ -111,7 +122,11 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, sigm
 }
 
 # run the function and assign to a variable named example
-example <- icc_type_i()
+library(tictoc)
+
+tic()
+example <- icc_type_i(lvl_2_units = 50, lvl_1_units = 20, target_icc = .01, replications = 5000)
+toc()
 
 # look at results
 head(example)
