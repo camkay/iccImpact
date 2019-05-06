@@ -117,8 +117,18 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, repl
     }
   }
   
-  # return the results
-  return(zr)
+  # calculate false positive rate
+  type_1_error <- sum(zr$p_val < .05) / length(zr$p_val) * 100
+  
+  # calculate mean icc
+  mean_icc <- mean(zr$icc)
+  
+  # provide the average ICC for the simulated data
+  warning(paste0("The average ICC for the simulated data was ", round(mean_icc, 2), "."))
+  
+  # return type_1_error
+  return(type_1_error)
+  
 }
 
 # run the function and assign to a variable named example
@@ -128,13 +138,5 @@ tic()
 example <- icc_type_i(lvl_2_units = 50, lvl_1_units = 20, target_icc = .01, replications = 5000)
 toc()
 
-# look at results
-head(example)
-
-# calculate type i error
-sum(example$p_val < .05) / length(example$p_val) * 100
-
-# look at average icc (for sanity)
-mean(example$icc)
 
     
