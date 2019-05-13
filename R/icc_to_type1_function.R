@@ -1,8 +1,37 @@
-# load required packages
-library(MASS)
+#' ICC to Type I Error Inflation
+#'
+#' This function allows you to express your love of cats.
+#' @param lvl_2_units The number of level-2 units.
+#' @param lvl_1_units The number of level-1 units.
+#' @param target_icc The ICC level to calculate the inflated Type I Error for.
+#' @param replications The number of replications. Defaults to 1000. 
+#' @param icc_acc The accuracy for the simulated ICC.
+#' @keywords icc
+#' @keywords type i error
+#' @export
+#' @examples
+#' function(lvl_2_units = 20, lvl_1_units = 10, target_icc = .1, replications = 1000, icc_acc = .01)
 
 # create function
-icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, replications = 1000, icc_acc = .01) {
+icc_type_i <- function(lvl_2_units, lvl_1_units, target_icc, replications = 1000, icc_acc = .01) {
+  
+  # ensure all arguments are numeric
+  if (!is.numeric(lvl_2_units)) {
+    stop("Argument level_2_units is not numeric.")
+  } else if (!is.numeric(lvl_1_units)) {
+    stop("Argument level_1_units is not numeric.")
+  } else if (!is.numeric(target_icc)) {
+    stop("Argument target_icc is not numeric.")
+  } else if (!is.numeric(replications)) {
+    stop("Argument replications is not numeric.")
+  } else if (!is.numeric(icc_acc)) {
+    stop("Argument icc_acc is not numeric.")
+  }
+  
+  # ensure target_icc is between 0 and 1
+  if (target_icc > 1 | target_icc < 0) {
+    stop("Argument target_icc must be between 0 and 1.")
+  }
   
   # calculate total number of units and number of units per condition
   total_units          <- lvl_2_units * lvl_1_units # total number of units accross all levels
@@ -130,13 +159,3 @@ icc_type_i <- function(lvl_2_units = 10, lvl_1_units = 20, target_icc = .2, repl
   return(type_1_error)
   
 }
-
-# run the function and assign to a variable named example
-library(tictoc)
-
-tic()
-example <- icc_type_i(lvl_2_units = 50, lvl_1_units = 20, target_icc = .01, replications = 5000)
-toc()
-
-
-    
