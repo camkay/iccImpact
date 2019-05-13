@@ -87,7 +87,7 @@ icc_type_i <- function(lvl_2_units, lvl_1_units, target_icc, replications = 1000
   while (counter != replications) { 
     
     # simulate from a multivariate normal distribution
-    ab <- mvrnorm(n     = lvl_2_units,   # draw the number of samples equivalent to level 1 units
+    ab <- MASS::mvrnorm(n     = lvl_2_units,   # draw the number of samples equivalent to level 1 units
                   mu    = c(mu_a, mu_b), # set means for the variables
                   Sigma = sigma_ab)      # set the covariance matrix
     a <- ab[ , 1] # simulation of intercept
