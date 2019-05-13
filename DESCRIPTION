@@ -1,4 +1,4 @@
-Package: ICC Impact
+Package: icc_impact
 Title: The Impact of ICC on Type-I Error Inflation
 Version: 0.0.0.9000
 Authors@R: person("Cameron", "Kay", email = "ckay@uoregon.edu", role = c("aut", "cre"))
