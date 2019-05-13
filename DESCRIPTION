@@ -1,9 +1,11 @@
-Package: cats
-Title: What the Package Does (one line, title case)
+Package: ICC Impact
+Title: The Impact of ICC on Type I Error Inflation
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: person("Cameron", "Kay", email = "ckay@uoregon.edu", role = c("aut", "cre"))
+Description: Calculates Type I Error given ICC, number of level-one units, and number of level-two units.
 Depends: R (>= 3.5.3)
-License: What license is it under?
+Imports:
+	MASS
+License: MIT
 Encoding: UTF-8
 LazyData: true
