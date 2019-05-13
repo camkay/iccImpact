@@ -10,7 +10,7 @@
 #' @keywords type i error
 #' @export
 #' @examples
-#' function(lvl_2_units = 20, lvl_1_units = 10, target_icc = .1, replications = 1000, icc_acc = .01)
+#' icc_type_i(lvl_2_units = 20, lvl_1_units = 10, target_icc = .1, replications = 1000, icc_acc = .01)
 
 # create function
 icc_type_i <- function(lvl_2_units, lvl_1_units, target_icc, replications = 1000, icc_acc = .01) {
@@ -153,9 +153,10 @@ icc_type_i <- function(lvl_2_units, lvl_1_units, target_icc, replications = 1000
   mean_icc <- mean(zr$icc)
   
   # provide the average ICC for the simulated data
-  warning(paste0("The average ICC for the simulated data was ", round(mean_icc, 2), "."))
+  message(paste0("The average ICC for the simulated data was ", round(mean_icc, 2), "."))
   
   # return type_1_error
   return(type_1_error)
   
 }
+  
