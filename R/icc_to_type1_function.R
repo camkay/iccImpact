@@ -1,11 +1,11 @@
 #' ICC to Type I Error Inflation
 #'
-#' This function allows you to express your love of cats.
+#' This function allows you to calculate the inflated Type-I error rate for a particular sample size and ICC value.
 #' @param lvl_2_units The number of level-2 units.
 #' @param lvl_1_units The number of level-1 units.
-#' @param target_icc The ICC level to calculate the inflated Type I Error for.
-#' @param replications The number of replications. Defaults to 1000. 
-#' @param icc_acc The accuracy for the simulated ICC.
+#' @param target_icc The ICC level. 
+#' @param replications The number of simulations to be run. Defaults to 1000. 
+#' @param icc_acc The accuracy for the simulated ICC. Defaults to +- .01.
 #' @keywords icc
 #' @keywords type i error
 #' @export
