@@ -3,7 +3,7 @@ Title: The Impact of ICC on Type-I Error Inflation
 Version: 0.0.0.9000
 Authors@R: person("Cameron", "Kay", email = "ckay@uoregon.edu", role = c("aut", "cre"))
 Description: Calculates Type-I Error given ICC, number of level-one units, and number of level-two units. The code was inspired by Musca, Kamiejski, Nugier, Méot, Er-Rafiy, and Brauer's (2018) "Data with hierarchical structure: impact of intraclass correlation and sample size on Type-I error."
-Depends: R (>= 3.5.3)
+Depends: R (>= 3.5.1)
 Imports:
 	MASS
 License: MIT
